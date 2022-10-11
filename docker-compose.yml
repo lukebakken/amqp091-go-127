@@ -1,0 +1,42 @@
+version: '3'
+
+networks:
+  rabbitnet:
+    name: rabbitnet
+    driver: bridge
+
+services:
+  producer:
+    image: pivotalrabbitmq/perf-test:latest
+    networks:
+      - rabbitnet
+    command:
+      - --uris=amqp://rabbitmq
+      - --servers-startup-timeout=120
+      - --rate=1
+      - --producers=3
+      - --consumers=0
+      - --confirm=16
+      - --predeclared
+      - --queue=amqp091-go-119
+      - --routing-key=amqp091-go-119
+      - --flag=persistent
+      - --flag=mandatory
+    depends_on:
+      - rmq
+    restart: on-failure
+  consumer:
+    build: consumer
+    networks:
+      - rabbitnet
+    depends_on:
+      - rmq
+  rmq:
+    build: rmq
+    hostname: rabbitmq
+    networks:
+      - rabbitnet
+    ports:
+      # HOST:CONTAINER
+      - 15671:15671
+      - 15672:15672
